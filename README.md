@@ -1,5 +1,5 @@
-<div align="center">
 # 🔐 Steganography Web Application
+<div align="center">
 
 <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" />
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
