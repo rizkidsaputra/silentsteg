@@ -125,6 +125,20 @@ export default function About() {
                 <li>Remember that image processing may destroy hidden data</li>
               </ul>
             </section>
+            
+            {/* Privacy Policy */}
+            <section id="privacy" className="bg-surface-secondary border border-border rounded-lg p-8">
+              <h2 className="text-2xl font-bold mb-4">Privacy Policy</h2>
+              <p className="text-foreground-muted mb-4">
+                This website does not store any photos you upload. All image processing is performed locally in your
+                browser; files are not sent to or retained on our servers. Any resulting files are only saved if you
+                explicitly download them.
+              </p>
+              <p className="text-foreground-muted">
+                If you have privacy concerns, avoid uploading images containing sensitive information and delete
+                downloaded files from your device when they are no longer needed.
+              </p>
+            </section>
           </div>
         </div>
       </main>
