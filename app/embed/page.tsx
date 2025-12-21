@@ -48,12 +48,20 @@ export default function Embed() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background">
-        <div className="mx-auto max-w-4xl px-6 py-12">
-          <h1 className="text-4xl font-bold mb-2">Embed Data</h1>
-          <p className="text-foreground-muted mb-12">Hide text or files inside an image</p>
 
-          <div className="space-y-8">
+      <main className="min-h-screen bg-background">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-14">
+
+          {/* Header */}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+            Embed Data
+          </h1>
+          <p className="text-sm sm:text-base text-foreground-muted mb-8 sm:mb-12">
+            Hide text or files inside an image
+          </p>
+
+          <div className="space-y-6 sm:space-y-8">
+
             {/* Method Selection */}
             <MethodSelector
               methods={["EXIF", "LSB", "PNG_METADATA"]}
@@ -61,16 +69,25 @@ export default function Embed() {
               onSelect={(m) => setMethod(m as EmbedMethod)}
             />
 
-            {/* Upload Section */}
-            <div className="bg-surface-secondary border border-border rounded-lg p-8">
-              <h2 className="text-xl font-bold mb-6">Step 1: Select Image</h2>
-              <FileUpload accept="image/*" onFileSelect={setImageFile} selectedFile={imageFile} />
+            {/* Step 1 */}
+            <div className="bg-surface-secondary border border-border rounded-lg p-4 sm:p-6 lg:p-8">
+              <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
+                Step 1: Select Image
+              </h2>
+              <FileUpload
+                accept="image/*"
+                onFileSelect={setImageFile}
+                selectedFile={imageFile}
+              />
             </div>
 
+            {/* PNG Metadata */}
             {method === "PNG_METADATA" && (
-              <div className="bg-surface-secondary border border-border rounded-lg p-8">
-                <h2 className="text-xl font-bold mb-6">Metadata Field</h2>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="bg-surface-secondary border border-border rounded-lg p-4 sm:p-6 lg:p-8">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
+                  Metadata Field
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {pngFields.map((field) => (
                     <button
                       key={field}
@@ -88,10 +105,13 @@ export default function Embed() {
               </div>
             )}
 
+            {/* EXIF */}
             {method === "EXIF" && (
-              <div className="bg-surface-secondary border border-border rounded-lg p-8">
-                <h2 className="text-xl font-bold mb-6">EXIF Field</h2>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="bg-surface-secondary border border-border rounded-lg p-4 sm:p-6 lg:p-8">
+                <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
+                  EXIF Field
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {exifFields.map((field) => (
                     <button
                       key={field}
@@ -109,25 +129,42 @@ export default function Embed() {
               </div>
             )}
 
-            {/* Content Input */}
-            <div className="bg-surface-secondary border border-border rounded-lg p-8">
-              <h2 className="text-xl font-bold mb-6">Step 2: Add Content to Hide</h2>
+            {/* Step 2 */}
+            <div className="bg-surface-secondary border border-border rounded-lg p-4 sm:p-6 lg:p-8">
+              <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
+                Step 2: Add Content to Hide
+              </h2>
+
               <div className="space-y-4">
                 <textarea
                   value={typeof hideContent === "string" ? hideContent : ""}
                   onChange={(e) => setHideContent(e.target.value)}
                   placeholder="Enter text to embed..."
-                  className="w-full h-32 bg-background border border-border rounded-lg p-4 text-foreground placeholder-foreground-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                  className="
+                    w-full
+                    h-28 sm:h-32 lg:h-40
+                    bg-background
+                    border border-border
+                    rounded-lg
+                    p-3 sm:p-4
+                    text-sm sm:text-base
+                    focus:outline-none
+                    focus:border-primary
+                    focus:ring-1
+                    focus:ring-primary/20
+                  "
                 />
-                {method !== "EXIF" && method !== "PNG_METADATA" && (
+
+                {method === "LSB" && (
                   <>
                     <div className="flex items-center gap-3 py-4">
-                      <div className="flex-1 h-px bg-border"></div>
-                      <span className="text-foreground-muted text-sm">or</span>
-                      <div className="flex-1 h-px bg-border"></div>
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs sm:text-sm text-foreground-muted">or</span>
+                      <div className="flex-1 h-px bg-border" />
                     </div>
+
                     <label className="block">
-                      <div className="px-4 py-2 bg-surface border border-primary/30 rounded-lg cursor-pointer hover:bg-surface text-primary text-center font-medium transition-colors">
+                      <div className="px-4 py-3 sm:py-2 bg-surface border border-primary/30 rounded-lg cursor-pointer hover:bg-surface text-primary text-center font-medium transition-colors">
                         Upload File to Embed
                       </div>
                       <input
@@ -145,33 +182,35 @@ export default function Embed() {
               </div>
             </div>
 
-            {/* Error Message */}
+            {/* Error */}
             {errorMessage && (
-              <div className="bg-destructive/10 border border-destructive rounded-lg p-4">
+              <div className="bg-destructive/10 border border-destructive rounded-lg p-3 sm:p-4 text-sm sm:text-base">
                 <p className="text-destructive font-medium">{errorMessage}</p>
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 onClick={handleEmbed}
                 disabled={isProcessing}
-                className="flex-1 px-6 py-3 bg-primary text-background font-bold rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full sm:flex-1 px-6 py-3 bg-primary text-background font-bold rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isProcessing ? "Processing..." : "Embed & Download"}
               </button>
+
               <button
                 onClick={() => {
                   setImageFile(null)
                   setHideContent("")
                   setErrorMessage(null)
                 }}
-                className="flex-1 px-6 py-3 bg-surface-secondary border border-border text-foreground font-bold rounded-lg hover:border-primary/50 transition-colors"
+                className="w-full sm:flex-1 px-6 py-3 bg-surface-secondary border border-border text-foreground font-bold rounded-lg hover:border-primary/50 transition-colors"
               >
                 Reset
               </button>
             </div>
+
           </div>
         </div>
       </main>
@@ -179,9 +218,13 @@ export default function Embed() {
   )
 }
 
-async function embedContent(method: string, imageFile: File, content: string | File, field: string) {
-  console.log(`[v0] Embedding using ${method}`)
-
+// Steganography Logic
+async function embedContent(
+  method: string,
+  imageFile: File,
+  content: string | File,
+  field: string
+) {
   if (method === "EXIF") {
     const resultBlob = await embedExif(imageFile, content as string, field)
     downloadBlob(resultBlob, `stego_${imageFile.name}`)
@@ -205,7 +248,7 @@ async function embedContent(method: string, imageFile: File, content: string | F
     const result = await embedPngMeta(imageFile, field, content as string)
     downloadBlob(result.outputImage, result.fileName)
   } else {
-    throw new Error(`${method} method not yet implemented`)
+    throw new Error(`${method} method not implemented`)
   }
 }
 

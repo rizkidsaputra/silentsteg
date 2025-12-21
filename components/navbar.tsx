@@ -1,59 +1,109 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 
 export default function Navbar() {
-  const pathname = usePathname()
-
-  const isActive = (path: string) => pathname === path
+  const [open, setOpen] = useState(false)
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
-          <div className="w-2 h-2 bg-primary rounded-full"></div>
-          <span className="text-primary">Stego</span>
-          <span>Suite</span>
-        </Link>
+    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-14 sm:h-16 items-center justify-between">
 
-        {/* Navigation Links */}
-        <div className="flex items-center gap-8">
+          {/* Logo / Title */}
           <Link
-            href="/dashboard"
-            className={`transition-colors text-sm font-medium ${
-              isActive("/dashboard") ? "text-primary" : "text-foreground-muted hover:text-foreground"
-            }`}
+            href="/"
+            className="text-base sm:text-lg font-bold tracking-tight hover:text-primary transition-colors"
           >
-            Dashboard
+            SilentSteg
           </Link>
-          <Link
-            href="/embed"
-            className={`transition-colors text-sm font-medium ${
-              isActive("/embed") ? "text-primary" : "text-foreground-muted hover:text-foreground"
-            }`}
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-6">
+            <NavLink href="/embed">Embed</NavLink>
+            <NavLink href="/extract">Extract</NavLink>
+            <NavLink href="/about">About</NavLink>
+          </div>
+
+          {/* Mobile Button */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="md:hidden inline-flex items-center justify-center rounded-lg border border-border p-2 hover:bg-surface-secondary transition"
+            aria-label="Toggle menu"
           >
-            Embed
-          </Link>
-          <Link
-            href="/extract"
-            className={`transition-colors text-sm font-medium ${
-              isActive("/extract") ? "text-primary" : "text-foreground-muted hover:text-foreground"
-            }`}
-          >
-            Extract
-          </Link>
-          <Link
-            href="/about"
-            className={`transition-colors text-sm font-medium ${
-              isActive("/about") ? "text-primary" : "text-foreground-muted hover:text-foreground"
-            }`}
-          >
-            About
-          </Link>
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              {open ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {open && (
+        <div className="md:hidden border-t border-border bg-background">
+          <div className="px-4 py-4 space-y-2">
+            <MobileNavLink href="/embed" onClick={() => setOpen(false)}>
+              Embed
+            </MobileNavLink>
+            <MobileNavLink href="/extract" onClick={() => setOpen(false)}>
+              Extract
+            </MobileNavLink>
+            <MobileNavLink href="/about" onClick={() => setOpen(false)}>
+              About
+            </MobileNavLink>
+          </div>
+        </div>
+      )}
     </nav>
+  )
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="text-sm font-medium text-foreground-muted hover:text-primary transition-colors"
+    >
+      {children}
+    </Link>
+  )
+}
+
+function MobileNavLink({
+  href,
+  children,
+  onClick,
+}: {
+  href: string
+  children: React.ReactNode
+  onClick: () => void
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="block rounded-lg px-4 py-3 text-sm font-medium text-foreground hover:bg-surface-secondary transition-colors"
+    >
+      {children}
+    </Link>
   )
 }

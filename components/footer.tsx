@@ -12,7 +12,7 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-primary" />
               </div>
-              <span className="font-bold text-lg">StegoSuite</span>
+              <span className="font-bold text-lg">SilentSteg</span>
             </div>
             <p className="text-sm text-foreground-muted leading-relaxed max-w-md">
               Advanced steganography tools for hiding sensitive data in plain sight. All processing happens locally in
@@ -59,21 +59,26 @@ export default function Footer() {
                   Methods
                 </Link>
               </li>
-              <li>
-                <a href="#" className="text-sm text-foreground-muted hover:text-primary transition-colors">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-sm text-foreground-muted hover:text-primary transition-colors">
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-sm text-foreground-muted hover:text-primary transition-colors">
-                  Security
-                </a>
-              </li>
+                <li>
+                  <a
+                    href="https://github.com/rizkidsaputra/silentsteg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-foreground-muted hover:text-primary transition-colors"
+                  >
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <Link href="/about#privacy" className="text-sm text-foreground-muted hover:text-primary transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/about#security" className="text-sm text-foreground-muted hover:text-primary transition-colors">
+                    Security
+                  </Link>
+                </li>
             </ul>
           </div>
         </div>

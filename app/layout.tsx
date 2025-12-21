@@ -9,7 +9,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "StegoSuite - Advanced Steganography Tools",
+  title: "SilentSteg - Advanced Steganography Tools",
   description:
     "Hide sensitive information in plain sight using advanced steganography techniques. Embed and extract data from images with EXIF, LSB, and PNG metadata methods.",
 }

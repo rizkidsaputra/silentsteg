@@ -1,4 +1,4 @@
-# 🔐 Steganography Web Application
+# 🔐 SilentSteg - Steganography Web Application
 <div align="center">
 
 <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" />

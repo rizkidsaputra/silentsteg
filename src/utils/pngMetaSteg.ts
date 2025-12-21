@@ -9,7 +9,11 @@
    PUBLIC API
 ========================================================= */
 
-export async function embedPngMeta(imageFile, key, value) {
+export async function embedPngMeta(
+  imageFile: File,
+  key: string,
+  value: string
+): Promise<{ success: boolean; outputImage: Blob; fileName: string }> {
   const buffer = new Uint8Array(await imageFile.arrayBuffer())
   const chunks = parsePngChunks(buffer)
 
@@ -57,11 +61,13 @@ export async function embedPngMeta(imageFile, key, value) {
   }
 }
 
-export async function extractPngMeta(imageFile) {
+export async function extractPngMeta(
+  imageFile: File
+): Promise<{ metadata: Record<string, string> }> {
   const buffer = new Uint8Array(await imageFile.arrayBuffer())
   const chunks = parsePngChunks(buffer)
 
-  const metadata = {}
+  const metadata: Record<string, string> = {}
 
   chunks.forEach(chunk => {
     if (chunk.type === "tEXt") {
@@ -77,7 +83,7 @@ export async function extractPngMeta(imageFile) {
    PNG CORE
 ========================================================= */
 
-function parsePngChunks(data) {
+function parsePngChunks(data: Uint8Array): { type: string; data: Uint8Array }[] {
   const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10]
 
   for (let i = 0; i < PNG_SIGNATURE.length; i++) {
@@ -109,7 +115,7 @@ function parsePngChunks(data) {
   return chunks
 }
 
-function encodePngChunks(chunks) {
+function encodePngChunks(chunks: { type: string; data: Uint8Array }[]): Uint8Array {
   const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
 
   let size = PNG_SIGNATURE.length
@@ -150,7 +156,7 @@ function encodePngChunks(chunks) {
    tEXt CHUNK
 ========================================================= */
 
-function createTextChunk(key, value) {
+function createTextChunk(key: string, value: string) {
   const keyBytes = new TextEncoder().encode(key)
   const valueBytes = new TextEncoder().encode(value)
 
@@ -162,7 +168,7 @@ function createTextChunk(key, value) {
   return { type: "tEXt", data }
 }
 
-function parseTextChunk(data) {
+function parseTextChunk(data: Uint8Array) {
   const sep = data.indexOf(0)
   return {
     key: new TextDecoder().decode(data.slice(0, sep)),
@@ -178,7 +184,7 @@ function createIendChunk() {
    UTILITIES
 ========================================================= */
 
-function readUint32BE(buf, off) {
+function readUint32BE(buf: Uint8Array, off: number) {
   return (
     (buf[off] << 24) |
     (buf[off + 1] << 16) |
@@ -187,7 +193,7 @@ function readUint32BE(buf, off) {
   ) >>> 0
 }
 
-function writeUint32BE(buf, off, val) {
+function writeUint32BE(buf: Uint8Array, off: number, val: number) {
   buf[off] = (val >>> 24) & 0xff
   buf[off + 1] = (val >>> 16) & 0xff
   buf[off + 2] = (val >>> 8) & 0xff
@@ -198,7 +204,7 @@ function writeUint32BE(buf, off, val) {
    CRC32 (PNG STANDARD)
 ========================================================= */
 
-function calculateCrc(data) {
+function calculateCrc(data: Uint8Array) {
   let crc = 0xffffffff
   for (let i = 0; i < data.length; i++) {
     crc = CRC_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8)

@@ -239,7 +239,7 @@ function concatArrays(...arrays) {
  * @param {File} imageFile - Image file to embed into
  * @param {string} text - Text to embed
  * @param {string} password - Password for encryption (empty string for no encryption)
- * @returns {Promise<{success: boolean, outputImage: Blob, fileName: string}>}
+ * @returns {Promise<{success: boolean, outputImage: Blob, fileName: string, error?: string}>}
  */
 export async function embedLsbText(imageFile, text, password = "") {
   try {
@@ -272,7 +272,7 @@ export async function embedLsbText(imageFile, text, password = "") {
  * @param {File} imageFile - Image file to embed into
  * @param {File} file - File to embed
  * @param {string} password - Password for encryption (empty string for no encryption)
- * @returns {Promise<{success: boolean, outputImage: Blob, fileName: string}>}
+ * @returns {Promise<{success: boolean, outputImage: Blob, fileName: string, error?: string}>}
  */
 export async function embedLsbFile(imageFile, file, password = "") {
   try {
@@ -307,7 +307,7 @@ export async function embedLsbFile(imageFile, file, password = "") {
  * Extract hidden data from image using LSB steganography
  * @param {File} imageFile - Image file to extract from
  * @param {string} password - Password for decryption (empty string if no encryption)
- * @returns {Promise<{type: string, content?: string, filename?: string, fileBlob?: Blob}>}
+ * @returns {Promise<{type: string, content?: string, filename?: string, fileBlob?: Blob, error?: string}>}
  */
 export async function extractLsb(imageFile, password = "") {
   try {
