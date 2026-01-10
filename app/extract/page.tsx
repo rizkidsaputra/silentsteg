@@ -121,9 +121,15 @@ export default function Extract() {
                       <p className="text-xs sm:text-sm font-semibold text-primary mb-2">
                         {key}
                       </p>
-                      {value ? (
+                      {value !== null ? (
                         <p className="text-foreground font-mono text-xs sm:text-sm break-words max-h-32 overflow-y-auto">
-                          {value}
+                          {typeof value === "string" && value.includes(",")
+                            ? value
+                                .split(",")
+                                .slice(8)
+                                .map((n) => String.fromCharCode(Number(n)))
+                                .join("")
+                            : value}
                         </p>
                       ) : (
                         <p className="text-foreground-muted text-xs sm:text-sm italic">
