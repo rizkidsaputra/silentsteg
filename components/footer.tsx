@@ -86,7 +86,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border flex flex-col items-center gap-4">
           <p className="text-sm text-foreground-muted text-center">
-            © {new Date().getFullYear()} StegoSuite. Created by{" "}
+            © {new Date().getFullYear()} SilentSteg. Created by{" "}
             <a
               href="https://github.com/rizkidsaputra"
               target="_blank"
