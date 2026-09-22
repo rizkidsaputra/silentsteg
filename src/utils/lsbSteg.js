@@ -1,58 +1,113 @@
+// ===================== Constants =====================
+
+// Payload envelope: [FORMAT_VERSION(1)][TYPE(1)][... type-specific ...]
+// TYPE_TEXT body:   [4-byte encEnvelope length][encEnvelope]
+// TYPE_FILE body:   [4-byte filename length][filename][4-byte encEnvelope length][encEnvelope]
+//
+// encEnvelope (produced by encryptData / consumed by decryptData):
+//   ENC_NONE:            [0x00][plaintext]
+//   ENC_AES_GCM_PBKDF2:  [0x01][salt(16)][iv(12)][ciphertext+authTag]
+const FORMAT_VERSION = 2
+const TYPE_TEXT = 0
+const TYPE_FILE = 1
+
+const ENC_NONE = 0x00
+const ENC_AES_GCM_PBKDF2 = 0x01
+
+const SALT_LENGTH = 16
+const IV_LENGTH = 12 // recommended nonce size for AES-GCM
+const PBKDF2_ITERATIONS = 210000
+
 // ===================== Helper Functions =====================
 
 /**
- * Derive AES key from password using SHA-256 (matching Python implementation)
+ * Derive an AES-GCM key from a password using PBKDF2 (salted, iterated).
+ * Replaces the old unsalted single-round SHA-256 key derivation, which was
+ * vulnerable to rainbow-table lookups and fast brute-forcing.
  */
-async function getKey(password) {
+async function deriveKey(password, salt) {
   const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data)
-  return new Uint8Array(hashBuffer)
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, [
+    "deriveKey",
+  ])
+
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  )
 }
 
 /**
- * Encrypt data using AES-CFB mode (matching Python struct.pack big-endian)
- * Returns: [IV (16 bytes)][Ciphertext]
+ * Encrypt data using AES-GCM (authenticated encryption) with a PBKDF2-derived key.
+ * AES-CFB (the previous scheme) is not part of the Web Crypto API and always
+ * threw a NotSupportedError at runtime whenever a password was supplied - the
+ * encryption feature was effectively dead code. AES-GCM also provides a built-in
+ * authentication tag, so tampered/corrupted ciphertext is detected instead of
+ * silently decrypting to garbage.
+ *
+ * Returns the envelope: [encFlag(1)][salt(16) + iv(12) if encrypted][ciphertext]
  */
 async function encryptData(data, password) {
-  if (password === "" || password.length === 0) {
-    return data
+  if (!password) {
+    return concatArrays(new Uint8Array([ENC_NONE]), data)
   }
 
-  const key = await getKey(password)
-  const iv = crypto.getRandomValues(new Uint8Array(16))
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH))
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
+  const key = await deriveKey(password, salt)
 
-  // Import key for WebCrypto
-  const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "AES-CFB", length: 256 }, false, ["encrypt"])
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data))
 
-  // Encrypt using AES-CFB
-  const encrypted = await crypto.subtle.encrypt({ name: "AES-CFB", iv }, cryptoKey, data)
-
-  // Combine IV + encrypted data
-  const result = new Uint8Array(16 + encrypted.byteLength)
-  result.set(iv, 0)
-  result.set(new Uint8Array(encrypted), 16)
-
-  return result
+  return concatArrays(new Uint8Array([ENC_AES_GCM_PBKDF2]), salt, iv, encrypted)
 }
 
 /**
- * Decrypt data using AES-CFB mode
+ * Decrypt an envelope produced by encryptData. Throws a user-facing error
+ * (instead of returning corrupted bytes) when the password is wrong, the
+ * envelope's encryption state doesn't match what the caller expects, or the
+ * data has been tampered with (GCM authentication failure).
  */
-async function decryptData(data, password) {
-  if (password === "" || password.length === 0) {
-    return data
+async function decryptData(envelope, password) {
+  if (!envelope || envelope.length < 1) {
+    throw new Error("Data terenkripsi tidak valid atau rusak.")
   }
 
-  const key = await getKey(password)
-  const iv = data.slice(0, 16)
-  const ciphertext = data.slice(16)
+  const flag = envelope[0]
+  const rest = envelope.slice(1)
 
-  const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "AES-CFB", length: 256 }, false, ["decrypt"])
+  if (flag === ENC_NONE) {
+    if (password) {
+      throw new Error("Data ini tidak dienkripsi. Kosongkan password untuk mengekstraknya.")
+    }
+    return rest
+  }
 
-  const decrypted = await crypto.subtle.decrypt({ name: "AES-CFB", iv }, cryptoKey, ciphertext)
+  if (flag === ENC_AES_GCM_PBKDF2) {
+    if (!password) {
+      throw new Error("Data ini dienkripsi dengan password. Masukkan password untuk mengekstraknya.")
+    }
 
-  return new Uint8Array(decrypted)
+    if (rest.length < SALT_LENGTH + IV_LENGTH) {
+      throw new Error("Data terenkripsi tidak valid atau rusak.")
+    }
+
+    const salt = rest.slice(0, SALT_LENGTH)
+    const iv = rest.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH)
+    const ciphertext = rest.slice(SALT_LENGTH + IV_LENGTH)
+    const key = await deriveKey(password, salt)
+
+    try {
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext)
+      return new Uint8Array(decrypted)
+    } catch (e) {
+      throw new Error("Gagal mendekripsi data. Password salah atau data rusak.")
+    }
+  }
+
+  throw new Error("Format enkripsi tidak dikenali.")
 }
 
 /**
@@ -124,8 +179,10 @@ async function encodeLSB(imageFile, payload) {
   const imageData = await loadImageData(imageFile)
   const { width, height, data: pixels } = imageData
 
-  // Calculate capacity: each pixel has 3 channels, each channel stores 1 bit
-  const maxCapacity = (width * height * 3) / 8
+  // Calculate capacity: each pixel has 3 channels, each channel stores 1 bit.
+  // Floored to whole bytes - decodeLSB drops any trailing partial byte, so the
+  // true usable capacity is never fractional.
+  const maxCapacity = Math.floor((width * height * 3) / 8)
   const payloadLen = payload.length
 
   if (payloadLen > maxCapacity) {
@@ -246,11 +303,14 @@ export async function embedLsbText(imageFile, text, password = "") {
     const preparedImage = await prepareImage(imageFile)
     const encoder = new TextEncoder()
     const textData = encoder.encode(text)
-    const encrypted = await encryptData(textData, password)
+    const envelope = await encryptData(textData, password)
 
-    // Format: [4 byte size][encrypted data]
-    const sizeBytes = packBigEndian(encrypted.length)
-    const payload = concatArrays(sizeBytes, encrypted)
+    // Format: [version][type=TEXT][4-byte envelope size][envelope]
+    const payload = concatArrays(
+      new Uint8Array([FORMAT_VERSION, TYPE_TEXT]),
+      packBigEndian(envelope.length),
+      envelope,
+    )
 
     const outputBlob = await encodeLSB(preparedImage, payload)
 
@@ -278,15 +338,19 @@ export async function embedLsbFile(imageFile, file, password = "") {
   try {
     const preparedImage = await prepareImage(imageFile)
     const fileData = await file.arrayBuffer()
-    const encrypted = await encryptData(new Uint8Array(fileData), password)
+    const envelope = await encryptData(new Uint8Array(fileData), password)
 
-    // Format: [4 byte filename_len][filename][4 byte encrypted_size][encrypted data]
+    // Format: [version][type=FILE][4-byte filename_len][filename][4-byte envelope size][envelope]
     const encoder = new TextEncoder()
     const filenameBytes = encoder.encode(file.name)
-    const filenameLenBytes = packBigEndian(filenameBytes.length)
-    const encryptedSizeBytes = packBigEndian(encrypted.length)
 
-    const payload = concatArrays(filenameLenBytes, filenameBytes, encryptedSizeBytes, encrypted)
+    const payload = concatArrays(
+      new Uint8Array([FORMAT_VERSION, TYPE_FILE]),
+      packBigEndian(filenameBytes.length),
+      filenameBytes,
+      packBigEndian(envelope.length),
+      envelope,
+    )
 
     const outputBlob = await encodeLSB(preparedImage, payload)
 
@@ -304,7 +368,16 @@ export async function embedLsbFile(imageFile, file, password = "") {
 }
 
 /**
- * Extract hidden data from image using LSB steganography
+ * Extract hidden data from image using LSB steganography.
+ *
+ * The previous implementation guessed whether the payload was a "file" or
+ * "text" by speculatively parsing it as a file and checking whether the
+ * decoded filename length looked plausible (< 1000). That heuristic could
+ * misfire (e.g. it would throw on any image with no embedded data, and could
+ * in principle misclassify a text payload whose first bytes happened to look
+ * like a valid filename-length header). The payload now carries an explicit
+ * type byte, so no guessing is required.
+ *
  * @param {File} imageFile - Image file to extract from
  * @param {string} password - Password for decryption (empty string if no encryption)
  * @returns {Promise<{type: string, content?: string, filename?: string, fileBlob?: Blob, error?: string}>}
@@ -314,49 +387,67 @@ export async function extractLsb(imageFile, password = "") {
     const preparedImage = await prepareImage(imageFile)
     const raw = await decodeLSB(preparedImage)
 
-    // Try to detect if it's a file or text by attempting file format first
-    try {
-      // Try file format: [4 byte filename_len][filename][4 byte size][data]
-      if (raw.length >= 8) {
-        const nameLenValue = unpackBigEndian(raw, 0)
-
-        // Sanity check: filename length should be reasonable
-        if (nameLenValue > 0 && nameLenValue < 1000 && nameLenValue + 8 <= raw.length) {
-          const filename = new TextDecoder().decode(raw.slice(4, 4 + nameLenValue))
-          const sizeValue = unpackBigEndian(raw, 4 + nameLenValue)
-
-          if (sizeValue > 0 && sizeValue + 8 + nameLenValue <= raw.length) {
-            const encrypted = raw.slice(8 + nameLenValue, 8 + nameLenValue + sizeValue)
-            const data = await decryptData(encrypted, password)
-
-            return {
-              type: "file",
-              filename,
-              fileBlob: new Blob([data]),
-            }
-          }
-        }
-      }
-    } catch (e) {
-      // Fall through to text format
+    if (raw.length < 2) {
+      throw new Error("Tidak ada data tersembunyi yang ditemukan pada gambar ini.")
     }
 
-    // Text format: [4 byte size][data]
-    if (raw.length >= 4) {
-      const size = unpackBigEndian(raw, 0)
-      if (size > 0 && size + 4 <= raw.length) {
-        const encrypted = raw.slice(4, 4 + size)
-        const data = await decryptData(encrypted, password)
-        const content = new TextDecoder("utf-8").decode(data)
+    const version = raw[0]
+    const type = raw[1]
 
-        return {
-          type: "text",
-          content,
-        }
+    if (version !== FORMAT_VERSION) {
+      throw new Error(
+        "Tidak ada data tersembunyi yang valid ditemukan (format tidak dikenali). Pastikan gambar ini memang berisi data LSB.",
+      )
+    }
+
+    let offset = 2
+
+    if (type === TYPE_TEXT) {
+      if (offset + 4 > raw.length) throw new Error("Data rusak atau tidak lengkap.")
+      const size = unpackBigEndian(raw, offset)
+      offset += 4
+
+      if (size < 0 || offset + size > raw.length) {
+        throw new Error("Data rusak atau tidak lengkap.")
+      }
+
+      const envelope = raw.slice(offset, offset + size)
+      const data = await decryptData(envelope, password)
+      const content = new TextDecoder("utf-8").decode(data)
+
+      return { type: "text", content }
+    }
+
+    if (type === TYPE_FILE) {
+      if (offset + 4 > raw.length) throw new Error("Data rusak atau tidak lengkap.")
+      const nameLen = unpackBigEndian(raw, offset)
+      offset += 4
+
+      if (nameLen < 0 || offset + nameLen > raw.length) {
+        throw new Error("Data rusak atau tidak lengkap.")
+      }
+      const filename = new TextDecoder().decode(raw.slice(offset, offset + nameLen))
+      offset += nameLen
+
+      if (offset + 4 > raw.length) throw new Error("Data rusak atau tidak lengkap.")
+      const size = unpackBigEndian(raw, offset)
+      offset += 4
+
+      if (size < 0 || offset + size > raw.length) {
+        throw new Error("Data rusak atau tidak lengkap.")
+      }
+
+      const envelope = raw.slice(offset, offset + size)
+      const data = await decryptData(envelope, password)
+
+      return {
+        type: "file",
+        filename,
+        fileBlob: new Blob([data]),
       }
     }
 
-    throw new Error("Invalid or corrupted LSB data")
+    throw new Error("Tipe data tersembunyi tidak dikenali.")
   } catch (error) {
     return {
       type: "error",

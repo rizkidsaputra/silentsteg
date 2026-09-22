@@ -120,24 +120,85 @@
   @theme {
     --color-surface: oklch(0.12 0 0);
     --color-surface-secondary: oklch(0.1 0 0);
+    --color-surface-tertiary: oklch(0.07 0 0);
+    --color-foreground-muted: oklch(0.65 0 0);
     --color-warning: oklch(0.6 0.2 50);
     --color-success: oklch(0.65 0.25 142);
   }
+}
 
-  .bg-surface {
-    @apply bg-[okch(0.12_0_0)];
+/*
+ * "Bitmap terminal" brand language: blockier corners than the default
+ * shadcn scale, plus a neon glow utility so the accent color reads as
+ * neon rather than flat green text. Kept as opt-in utility classes
+ * (rather than redefining --radius globally) so unrelated shadcn/ui
+ * primitives (dialogs, popovers, etc.) are unaffected.
+ */
+@layer utilities {
+  .radius-terminal {
+    border-radius: 0.25rem;
   }
 
-  .bg-surface-secondary {
-    @apply bg-[okch(0.10_0_0)];
+  .glow-primary {
+    box-shadow: 0 0 0 1px oklch(0.65 0.25 142 / 0.4), 0 0 16px 0 oklch(0.65 0.25 142 / 0.35);
   }
 
-  .text-foreground-muted {
-    @apply text-[okch(0.60_0_0)];
+  .glow-primary-sm {
+    box-shadow: 0 0 12px 0 oklch(0.65 0.25 142 / 0.25);
   }
 
-  .border-warning {
-    @apply border-[okch(0.60_0.20_50)];
+  .text-glow {
+    text-shadow: 0 0 12px oklch(0.65 0.25 142 / 0.5);
+  }
+
+  /* Terminal-style heading prompt: a static (non-blinking) "> " marker.
+     Kept static rather than animated to respect Reduce Motion. */
+  .prompt-heading::before {
+    content: "> ";
+    color: var(--color-success);
+    font-family: var(--font-mono);
+  }
+
+  /*
+   * "Scan target" corner brackets - a restrained nod to the app's job
+   * (targeting a PNG/JPG file to read/write bits in). Only two opposing
+   * corners are drawn so it reads as a frame accent rather than a full
+   * decorative border.
+   */
+  .corner-brackets {
+    position: relative;
+  }
+  .corner-brackets::before,
+  .corner-brackets::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+  }
+  .corner-brackets::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid var(--color-success);
+    border-left: 2px solid var(--color-success);
+  }
+  .corner-brackets::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 2px solid var(--color-success);
+    border-right: 2px solid var(--color-success);
+  }
+
+  /* Small monospace "file format" chip, e.g. .PNG / .JPG / .BMP tags. */
+  .format-chip {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground-muted);
+    background: var(--color-surface);
   }
 }
 
@@ -147,5 +208,34 @@
   }
   body {
     @apply bg-background text-foreground;
+    position: relative;
+  }
+
+  /*
+   * Subtle static CRT scanline texture. Opacity kept very low (~3%) and
+   * non-animated so it never competes with text contrast or triggers
+   * motion sensitivity - see accessibility.md "Be cautious with
+   * fast-moving and blinking animations."
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      oklch(0.65 0.25 142 / 0.05) 0px,
+      oklch(0.65 0.25 142 / 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: overlay;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    body::before {
+      display: none;
+    }
   }
 }

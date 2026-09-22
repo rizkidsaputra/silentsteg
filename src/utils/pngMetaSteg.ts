@@ -56,7 +56,7 @@ export async function embedPngMeta(
 
   return {
     success: true,
-    outputImage: new Blob([output], { type: "image/png" }),
+    outputImage: new Blob([output.buffer as ArrayBuffer], { type: "image/png" }),
     fileName: `stego_${imageFile.name.replace(/\.png$/i, "")}_meta.png`,
   }
 }
@@ -69,10 +69,15 @@ export async function extractPngMeta(
 
   const metadata: Record<string, string> = {}
 
+  // PNG allows multiple tEXt chunks; per spec a given keyword should appear at
+  // most once, but if a malformed/foreign file has duplicates, keep the first
+  // occurrence rather than silently letting a later chunk overwrite it.
   chunks.forEach(chunk => {
     if (chunk.type === "tEXt") {
       const { key, value } = parseTextChunk(chunk.data)
-      metadata[key] = value
+      if (!(key in metadata)) {
+        metadata[key] = value
+      }
     }
   })
 

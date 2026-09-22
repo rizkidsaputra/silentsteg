@@ -9,10 +9,10 @@ export default function Footer() {
           {/* Brand section */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-primary" />
+              <div className="w-8 h-8 radius-terminal bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-primary" aria-hidden="true" />
               </div>
-              <span className="font-bold text-lg">SilentSteg</span>
+              <span className="font-mono font-bold text-lg">silentsteg</span>
             </div>
             <p className="text-sm text-foreground-muted leading-relaxed max-w-md">
               Advanced steganography tools for hiding sensitive data in plain sight. All processing happens locally in
@@ -22,7 +22,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-foreground-muted">Quick Links</h3>
+            <h3 className="font-mono font-semibold mb-4 text-sm uppercase tracking-wider text-foreground-muted">Quick Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/dashboard" className="text-sm text-foreground-muted hover:text-primary transition-colors">
@@ -49,7 +49,7 @@ export default function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-foreground-muted">Resources</h3>
+            <h3 className="font-mono font-semibold mb-4 text-sm uppercase tracking-wider text-foreground-muted">Resources</h3>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -110,19 +110,19 @@ export default function Footer() {
               href="https://github.com/rizkidsaputra"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-9 h-9 rounded-lg bg-surface-secondary border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+              className="w-9 h-9 radius-terminal bg-surface-secondary border border-border flex items-center justify-center hover:border-primary/50 hover:glow-primary-sm transition-all"
               aria-label="Rizki GitHub"
             >
-              <Github className="w-4 h-4" />
+              <Github className="w-4 h-4" aria-hidden="true" />
             </a>
             <a
               href="https://github.com/JonatannaelPanjaitan"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-9 h-9 rounded-lg bg-surface-secondary border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+              className="w-9 h-9 radius-terminal bg-surface-secondary border border-border flex items-center justify-center hover:border-primary/50 hover:glow-primary-sm transition-all"
               aria-label="Jonatannael GitHub"
             >
-              <Github className="w-4 h-4" />
+              <Github className="w-4 h-4" aria-hidden="true" />
             </a>
           </div>
         </div>

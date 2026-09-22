@@ -14,9 +14,18 @@ export default function Navbar() {
           {/* Logo / Title */}
           <Link
             href="/"
-            className="text-base sm:text-lg font-bold tracking-tight hover:text-primary transition-colors"
+            className="inline-flex items-center gap-2 font-mono text-base sm:text-lg font-bold tracking-tight hover:text-primary transition-colors"
           >
-            SilentSteg
+            <span
+              className="grid grid-cols-2 grid-rows-2 gap-[2px] w-3.5 h-3.5 glow-primary-sm"
+              aria-hidden="true"
+            >
+              <span className="bg-primary" />
+              <span className="bg-primary/30" />
+              <span className="bg-primary/30" />
+              <span className="bg-primary" />
+            </span>
+            silentsteg
           </Link>
 
           {/* Desktop Menu */}
@@ -29,8 +38,10 @@ export default function Navbar() {
           {/* Mobile Button */}
           <button
             onClick={() => setOpen(!open)}
-            className="md:hidden inline-flex items-center justify-center rounded-lg border border-border p-2 hover:bg-surface-secondary transition"
-            aria-label="Toggle menu"
+            className="md:hidden inline-flex items-center justify-center radius-terminal border border-border p-2 min-w-[44px] min-h-[44px] hover:bg-surface-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-nav-menu"
           >
             <svg
               className="h-5 w-5"
@@ -38,6 +49,7 @@ export default function Navbar() {
               stroke="currentColor"
               strokeWidth={2}
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               {open ? (
                 <path
@@ -59,7 +71,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t border-border bg-background">
+        <div id="mobile-nav-menu" className="md:hidden border-t border-border bg-background">
           <div className="px-4 py-4 space-y-2">
             <MobileNavLink href="/embed" onClick={() => setOpen(false)}>
               Embed
@@ -81,7 +93,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <Link
       href={href}
-      className="text-sm font-medium text-foreground-muted hover:text-primary transition-colors"
+      className="font-mono text-sm font-medium text-foreground-muted hover:text-primary transition-colors"
     >
       {children}
     </Link>
@@ -101,7 +113,7 @@ function MobileNavLink({
     <Link
       href={href}
       onClick={onClick}
-      className="block rounded-lg px-4 py-3 text-sm font-medium text-foreground hover:bg-surface-secondary transition-colors"
+      className="block radius-terminal px-4 py-3 font-mono text-sm font-medium text-foreground hover:bg-surface-secondary transition-colors"
     >
       {children}
     </Link>

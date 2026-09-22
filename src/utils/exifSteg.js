@@ -33,24 +33,6 @@ function dataUrlToBlob(dataUrl) {
 }
 
 /**
- * Decode generic EXIF value (STRING or BYTE ARRAY)
- */
-function decodeExifBytes(value) {
-  if (!value) return null;
-
-  if (typeof value === "string") return value;
-
-  const bytes =
-    Array.isArray(value) ? new Uint8Array(value)
-    : value instanceof Uint8Array ? value
-    : null;
-
-  if (!bytes) return null;
-
-  return new TextDecoder().decode(bytes);
-}
-
-/**
  * Decode EXIF UserComment according to spec
  * Handles ASCII / UNICODE prefix correctly
  */
@@ -166,17 +148,8 @@ export async function extractExif(imageFile) {
     };
   }
 
-  let userComment = null;
   const rawUC = exifDict["Exif"]?.[piexif.ExifIFD.UserComment];
-
-  if (Array.isArray(rawUC) && rawUC.length >= 8) {
-    userComment = rawUC
-      .slice(8)
-      .map(b => String.fromCharCode(b))
-      .join("");
-  } else if (typeof rawUC === "string") {
-    userComment = rawUC.replace(/^ASCII\0\0\0/, "");
-  }
+  const userComment = decodeUserComment(rawUC);
 
   return {
     UserComment: userComment,
